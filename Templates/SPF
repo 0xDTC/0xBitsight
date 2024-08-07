@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Read data from filtered.json into a variable
+data=$(cat ../filtered.json)
+
+# Replace placeholder values in the template with data from filtered.json
+template=$(cat <<EOF
+{
+  "temporary_id": "{{temporary_id}}",
+  "assets": [
+    {
+      "asset": "{{asset}}",
+      "importance": {{importance}},
+    }
+  ],
+  "details": {
+    "diligence_annotations": {
+      "{{total}}": {
+        "mech_tags": {},
+        "spf_record": [{{total_spf_record}}]
+      },
+      "{{asset}}": {
+        "spf_record": [{{asset_spf_record}}]
+      }
+    },
+    "remediations": [{{remediations}}],
+    "vulnerabilities": [{{vulnerabilities}}],
+  },
+  "evidence_key": "{{evidence_key}}",
+  "first_seen": "{{first_seen}}",
+  "last_seen": "{{last_seen}}",
+  "risk_vector_label": "{{risk_vector_label}}",
+  "comments": "{{comments}}",
+  "remaining_decay": {{remaining_decay}},
+  "remediated": {{remediated}},
+}
+EOF
+)
+
+# Replace placeholders in the template with actual data from filtered.json
+template=$(echo "$template" | jq --argjson data "$data" '. | .temporary_id = $data.temporary_id | .assets[0].asset = $data.assets[0].asset | .assets[0].importance = $data.assets[0].importance | .details.diligence_annotations.total.spf_record = $data.details.diligence_annotations.total.spf_record | .details.diligence_annotations[$data.details.asset].spf_record = $data.details.diligence_annotations[$data.details.asset].spf_record | .details.remediations = $data.details.remediations | .details.vulnerabilities = $data.details.vulnerabilities | .evidence_key = $data.evidence_key | .first_seen = $data.first_seen | .last_seen = $data.last_seen | .risk_vector_label = $data.risk_vector_label | .comments = $data.comments | .remaining_decay = $data.remaining_decay | .remediated = $data.remediated')
+
+# Output the modified template
+echo "$template"
+
+# Call your script with the modified template as an argument
+# ./your_script.sh "$template"
